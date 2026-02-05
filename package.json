@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "node-red-contrib-aedes": "^0.15.0",
+    "node-red-dashboard": "^3.6.6"
+  }
+}

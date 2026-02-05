@@ -1,0 +1,302 @@
+[
+    {
+        "id": "flow_main",
+        "type": "tab",
+        "label": "Pro Dashboard",
+        "disabled": false,
+        "info": "Professional Analytics Dashboard"
+    },
+    {
+        "id": "aedes_broker",
+        "type": "aedes broker",
+        "name": "MQTT Broker",
+        "mqtt_port": 1883,
+        "mqtt_ws_bind": "port",
+        "mqtt_ws_port": 8080,
+        "x": 120,
+        "y": 40,
+        "z": "flow_main",
+        "wires": []
+    },
+    {
+        "id": "mqtt_broker_config",
+        "type": "mqtt-broker",
+        "name": "Local Broker",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "nodered-dashboard",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true
+    },
+    {
+        "id": "mqtt_video_in",
+        "type": "mqtt in",
+        "name": "Video Stream",
+        "topic": "video/stream",
+        "qos": "0",
+        "datatype": "utf8",
+        "broker": "mqtt_broker_config",
+        "x": 100,
+        "y": 140,
+        "z": "flow_main",
+        "wires": [
+            [
+                "video_widget"
+            ]
+        ]
+    },
+    {
+        "id": "video_widget",
+        "type": "ui_template",
+        "name": "Video Player",
+        "group": "group_main_video",
+        "order": 1,
+        "format": "<div style=\"width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#000; overflow:hidden; border-radius:8px;\">\n    <img src=\"data:image/jpeg;base64,{{msg.payload}}\" style=\"width:100%; height:100%; object-fit:contain;\">\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "width": 24,
+        "height": 14,
+        "x": 300,
+        "y": 140,
+        "z": "flow_main",
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "mqtt_analytics_in",
+        "type": "mqtt in",
+        "name": "Analytics",
+        "topic": "analytics/data",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "x": 90,
+        "y": 240,
+        "z": "flow_main",
+        "wires": [
+            [
+                "process_stats"
+            ]
+        ]
+    },
+    {
+        "id": "process_stats",
+        "type": "function",
+        "name": "Process Stats",
+        "func": "var dets = msg.payload.detections || [];\nvar cars = dets.filter(d => d.label === 'car').length;\nvar people = dets.filter(d => d.label === 'person').length;\n\nmsg.payload = {\n    cars: cars,\n    people: people,\n    total: dets.length,\n    detections: dets.slice(0, 8)\n};\nreturn msg;",
+        "outputs": 1,
+        "x": 280,
+        "y": 240,
+        "z": "flow_main",
+        "wires": [
+            [
+                "stats_display",
+                "chart_data"
+            ]
+        ]
+    },
+    {
+        "id": "stats_display",
+        "type": "ui_template",
+        "name": "Stats Sidebar",
+        "group": "group_sidebar",
+        "order": 1,
+        "format": "<div style=\"display:flex; flex-direction:column; gap:12px; height:100%; padding-right:4px;\">\n\n    <!-- Metric Cards -->\n    <div style=\"display:grid; grid-template-columns:1fr 1fr; gap:12px;\">\n        <div style=\"background:#1e1e2f; padding:15px; border-radius:8px; border-bottom:3px solid #00ff88;\">\n            <div style=\"font-size:32px; font-weight:700; color:#fff;\">{{msg.payload.cars}}</div>\n            <div style=\"font-size:11px; color:#aaa; text-transform:uppercase;\">Vehicles</div>\n        </div>\n        <div style=\"background:#1e1e2f; padding:15px; border-radius:8px; border-bottom:3px solid #00d4ff;\">\n            <div style=\"font-size:32px; font-weight:700; color:#fff;\">{{msg.payload.people}}</div>\n            <div style=\"font-size:11px; color:#aaa; text-transform:uppercase;\">People</div>\n        </div>\n    </div>\n\n    <!-- Detection List -->\n    <div style=\"background:#1e1e2f; border-radius:8px; flex-grow:1; display:flex; flex-direction:column; overflow:hidden;\">\n        <div style=\"padding:12px; background:rgba(255,255,255,0.05); font-weight:600; font-size:12px; letter-spacing:1px; color:#ddd;\">\n            LIVE DETECTIONS\n        </div>\n        <div style=\"flex-grow:1; overflow-y:auto; padding:8px;\">\n            <div ng-repeat=\"d in msg.payload.detections track by $index\" \n                 style=\"display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid rgba(255,255,255,0.05);\">\n                <div style=\"display:flex; align-items:center;\">\n                     <div style=\"width:6px; height:6px; border-radius:50%; margin-right:8px;\" \n                          ng-style=\"{'background': d.label==='car'?'#00ff88':(d.label==='person'?'#00d4ff':'#ff9f43')}\"></div>\n                     <span style=\"font-size:13px; color:#eee; text-transform:capitalize;\">{{d.label}}</span>\n                </div>\n                <span style=\"font-size:12px; font-weight:700;\" \n                      ng-style=\"{'color': d.label==='car'?'#00ff88':(d.label==='person'?'#00d4ff':'#ff9f43')}\">\n                    {{(d.confidence * 100).toFixed(0)}}%\n                </span>\n            </div>\n            <div ng-if=\"msg.payload.detections.length === 0\" \n                 style=\"text-align:center; padding:20px; color:#666; font-size:12px;\">\n                No Active Objects\n            </div>\n        </div>\n    </div>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "width": 6,
+        "height": 14,
+        "x": 480,
+        "y": 240,
+        "z": "flow_main",
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "chart_data",
+        "type": "function",
+        "name": "Chart Prep",
+        "func": "return [\n    { topic: \"Total\", payload: msg.payload.total }\n];",
+        "outputs": 1,
+        "x": 470,
+        "y": 300,
+        "z": "flow_main",
+        "wires": [
+            [
+                "trend_chart"
+            ]
+        ]
+    },
+    {
+        "id": "trend_chart",
+        "type": "ui_chart",
+        "name": "Traffic Trend",
+        "group": "group_bottom_metrics",
+        "order": 1,
+        "width": 24,
+        "height": 4,
+        "label": "Live Object Count",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "15",
+        "removeOlder": "2",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": true,
+        "useUTC": false,
+        "colors": [
+            "#00ff88"
+        ],
+        "outputs": 1,
+        "x": 670,
+        "y": 300,
+        "z": "flow_main",
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "mqtt_alerts_in",
+        "type": "mqtt in",
+        "name": "Alerts",
+        "topic": "analytics/alerts",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_config",
+        "x": 90,
+        "y": 360,
+        "z": "flow_main",
+        "wires": [
+            [
+                "toast_alert"
+            ]
+        ]
+    },
+    {
+        "id": "toast_alert",
+        "type": "function",
+        "name": "Toast",
+        "func": "msg.payload = '🚨 ' + msg.payload.object.toUpperCase() + ' detected!';\nreturn msg;",
+        "outputs": 1,
+        "x": 270,
+        "y": 360,
+        "z": "flow_main",
+        "wires": [
+            [
+                "show_toast"
+            ]
+        ]
+    },
+    {
+        "id": "show_toast",
+        "type": "ui_toast",
+        "name": "Toast",
+        "position": "top right",
+        "displayTime": "2",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "topic": "",
+        "x": 450,
+        "y": 360,
+        "z": "flow_main",
+        "wires": []
+    },
+    {
+        "id": "group_main_video",
+        "type": "ui_group",
+        "name": "Live Feed",
+        "tab": "tab_main",
+        "order": 1,
+        "disp": true,
+        "width": 24,
+        "collapse": false
+    },
+    {
+        "id": "group_sidebar",
+        "type": "ui_group",
+        "name": "Intelligence",
+        "tab": "tab_main",
+        "order": 2,
+        "disp": true,
+        "width": 6,
+        "collapse": false
+    },
+    {
+        "id": "group_bottom_metrics",
+        "type": "ui_group",
+        "name": "Metrics",
+        "tab": "tab_main",
+        "order": 3,
+        "disp": true,
+        "width": 24,
+        "collapse": false
+    },
+    {
+        "id": "tab_main",
+        "type": "ui_tab",
+        "name": "Dashboard",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ui_base",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-dark",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                "edited": false
+            },
+            "darkTheme": {
+                "default": "#00ff88",
+                "baseColor": "#00ff88",
+                "baseFont": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                "edited": true,
+                "widget-textColor": "#ffffff",
+                "widget-backgroundColor": "#121216",
+                "page-backgroundColor": "#08080a",
+                "page-titlebar-height": "48px",
+                "page-titlebar-backgroundColor": "#121216",
+                "group-backgroundColor": "#1a1a20",
+                "group-borderColor": "#2a2a30"
+            }
+        },
+        "site": {
+            "name": "SpotMines Analytics",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "false",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    }
+]

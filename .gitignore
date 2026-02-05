@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Videos (too large for git)
+*.mp4
+*.avi
+*.mkv
+*.mov
+
+# Models
+*.tflite
+*.pb
+*.onnx
+
+# Logs
+*.log
+
+# Node modules
+node_modules/
