@@ -2,6 +2,14 @@
 
 A complete simulation of a Raspberry Pi edge device performing video analytics with **fully mocked hardware**. No physical camera or Raspberry Pi required!
 
+## 📸 Screenshots
+
+### Live Dashboard
+![Dashboard](image.png)
+
+### Node-RED Flow
+![Node-RED Flow](nodered.png)
+
 ## 🏗️ Architecture
 
 ```
